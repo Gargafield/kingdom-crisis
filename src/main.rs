@@ -1,7 +1,8 @@
 mod app;
 mod render;
 mod events;
-mod widgets;
+mod variable;
+mod simulation;
 
 use crossterm::{
     execute, terminal::{
@@ -9,7 +10,8 @@ use crossterm::{
     }
 };
 use ratatui::prelude::{CrosstermBackend, Terminal};
-use std::io::{self, stdout, Result, Stdout};
+use simulation::step_simulation;
+use std::{io::{self, stdout, Result, Stdout}, thread::sleep, time::Duration};
 
 pub type Tui = Terminal<CrosstermBackend<Stdout>>;
 
@@ -31,13 +33,20 @@ fn main() -> Result<()> {
     let mut terminal = init()?;
     terminal.clear()?;
 
-    let mut app = app::App::default();
+    let mut app = app::App::new()
+        .with_start_config();
+
+    
 
     loop {
         terminal.draw(|frame| render::render_app(&app, frame))?;
         if events::handle_events(&mut app)? {
             break;
         }
+
+        step_simulation(&mut app);
+
+        sleep(Duration::from_millis(100));
     }
 
     restore()

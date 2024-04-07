@@ -21,7 +21,7 @@ pub fn handle_events(app: &mut App) -> Result<bool> {
 fn handle_key_event(app: &mut App, key_event: KeyEvent) -> Result<bool> {
     match key_event.code {
         KeyCode::Char('q') => return Ok(true),
-        _ => { app.handle_key_event(key_event) }
+        _ => { app.handle_key_event(key_event); }
     }
     Ok(false)
 }

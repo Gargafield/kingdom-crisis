@@ -1,70 +1,89 @@
+use std::collections::VecDeque;
+
 use crossterm::event::{KeyCode, KeyEvent};
-use ratatui::{prelude::*, symbols::border, widgets::{block::{Position, Title}, Block, BorderType, Borders, Paragraph}};
 
-use crate::widgets::{ActionWidget, GraphWidget, LogWidget, VariablesWidget};
+use crate::variable::{Variable, VariableType};
 
-#[derive(Debug, Default)]
+#[derive(Debug, Clone, Copy)]
+pub enum Policy {
+    Austerity,
+    Neutral,
+    Stimulus,
+}
+
+#[derive(Debug)]
 pub struct App {
-    pub counter: u8,
-
-    action_widget: ActionWidget,
-    graph_widget: GraphWidget,
-    variables_widget: VariablesWidget,
-    log_widget: LogWidget,
+    pub selected_variable: VariableType,
+    pub variables: [Variable; Variable::COUNT],
+    pub time: f64,
+    pub log: VecDeque<String>,
+    pub policy: Policy,
+    pub hover_index: usize,
 }
 
 impl App {
-    pub fn handle_key_event(&mut self, key_event: KeyEvent) {
-        match key_event.code {
-            KeyCode::Left => self.decrement(),
-            KeyCode::Right => self.increment(),
-            _ => {}
+    pub fn new() -> Self {
+        Self {
+            selected_variable: VariableType::GDP,
+            variables: [
+                Variable::new(VariableType::GDP)
+                    .grow_length(100),
+                Variable::new(VariableType::Income),
+                Variable::new(VariableType::Tax),
+                Variable::new(VariableType::Expenses),
+                Variable::new(VariableType::Opinion)
+                    .grow_length(100),
+                Variable::new(VariableType::Crisis)
+                    .grow_length(250),
+                Variable::new(VariableType::Stability)
+                    .grow_length(100),
+            ],
+            time: 0.0,
+            log: VecDeque::new(),
+            policy: Policy::Neutral,
+            hover_index: 0,
         }
     }
 
-    fn increment(&mut self) {
-        self.counter += 1;
+    pub fn with_start_config(mut self) -> Self {
+        self.variables[VariableType::GDP as usize].value = 100.0;
+        self.variables[VariableType::Income as usize].value = 0.0;
+        self.variables[VariableType::Tax as usize].value = 10.0;
+        self.variables[VariableType::Expenses as usize].value = 5.0;
+        self.variables[VariableType::Opinion as usize].value = 100.0;
+        self.variables[VariableType::Crisis as usize].value = 0.0;
+        self.variables[VariableType::Stability as usize].value = 100.0;
+
+        self
     }
 
-    fn decrement(&mut self) {
-        self.counter -= 1;
+    pub fn get_variable(&self, type_: &VariableType) -> &Variable {
+        &self.variables[*type_ as usize]
     }
-}
 
-impl App {
-    fn prepare_layout(&self, area: Rect) -> [Rect; 5] {
-        let layout = Layout::vertical([
-            Constraint::Percentage(70),
-            Constraint::Percentage(30),
-            ]).split(area);
-
-        let top = Layout::horizontal([
-            Constraint::Ratio(1, 3),
-            Constraint::Ratio(1, 3),
-            Constraint::Ratio(1, 3)])
-            .areas::<3>(layout[0]);
-
-        let bottom = Layout::horizontal([Constraint::Fill(1), Constraint::Fill(3)])
-            .areas::<2>(layout[1]);
-
-        [top[0], top[1], top[2], bottom[0], bottom[1]]
+    pub fn get_variable_mut(&mut self, type_: &VariableType) -> &mut Variable {
+        &mut self.variables[*type_ as usize]
     }
-}
 
-impl Widget for &App {
-    fn render(self, area: Rect, buf: &mut Buffer) {
-        let [actions, graph, variables, idk, log] = self.prepare_layout(area);
+    pub fn log_message(&mut self, message: String) {
+        self.log.push_front(message.to_string());
+        if self.log.len() > 20 {
+            self.log.pop_back();
+        }
+    }
 
-        self.action_widget.render(actions, buf);
-        self.graph_widget.render(graph, buf);
-        self.variables_widget.render(variables, buf);
-        self.log_widget.render(log, buf);
-
-        let block = Block::default()
-            .title(" IDK ")
-            .borders(Borders::ALL)
-            .border_type(BorderType::Rounded);
-
-        block.render(idk, buf);
+    pub fn handle_key_event(&mut self, event: KeyEvent) {
+        match event.code {
+            KeyCode::Up => {
+                self.hover_index = self.hover_index.saturating_sub(1);
+            }
+            KeyCode::Down => {
+                self.hover_index = (self.hover_index + 1).min(Variable::COUNT - 1);
+            }
+            KeyCode::Enter => {
+                self.selected_variable = VariableType::from(self.hover_index);
+            }
+            _ => {}
+        }
     }
 }
