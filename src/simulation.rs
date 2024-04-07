@@ -3,7 +3,6 @@ use crate::{action::ActionType, app::App, variable::VariableType};
 pub fn step_simulation(app: &mut App) {
     app.time += 1.0;
 
-    step_stability(app);
     step_crisis(app);
     step_opinion(app);
     step_expenses(app);
@@ -82,17 +81,4 @@ fn step_crisis(app: &mut App) {
 
     let new_crisis = f64::sin(time / 10.0) * 10.0 + f64::cos(time / 100.0) * 30.0;
     crisis.update(new_crisis.clamp(0.0, 100.0));
-}
-
-fn step_stability(app: &mut App) {
-    // Negative income, low opinion or high crisis
-    // gives a lower stability
-    let income = app.get_variable(&VariableType::Income).value;
-    let gdp = app.get_variable(&VariableType::GDP).value;
-    let opinion = app.get_variable(&VariableType::Opinion).value;
-    let crisis = app.get_variable(&VariableType::Crisis).value;
-    let stability = app.get_variable_mut(&VariableType::Stability);
-
-    let new_stability = stability.value + (income / gdp * 0.5) + (opinion - 50.0) * 0.001 - (crisis * 0.001);
-    stability.update(new_stability.clamp(0.0, 100.0));
 }

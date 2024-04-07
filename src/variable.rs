@@ -35,7 +35,6 @@ pub enum VariableType {
     Expenses,
     Opinion,
     Crisis,
-    Stability,
 }
 
 impl From<usize> for VariableType {
@@ -47,7 +46,6 @@ impl From<usize> for VariableType {
             3 => VariableType::Expenses,
             4 => VariableType::Opinion,
             5 => VariableType::Crisis,
-            6 => VariableType::Stability,
             _ => VariableType::GDP,
         }
     }
@@ -60,7 +58,7 @@ pub struct VariableDisplay {
     pub representation: VariableRepresentation,
 }
 
-const VARIABLE_COUNT: usize = 7;
+const VARIABLE_COUNT: usize = 6;
 const VARIABLE_DISPLAY: [VariableDisplay; VARIABLE_COUNT] = [
     VariableDisplay {
         emoji: '💲',
@@ -91,12 +89,7 @@ const VARIABLE_DISPLAY: [VariableDisplay; VARIABLE_COUNT] = [
         emoji: '🔥',
         name: "Crisis",
         representation: VariableRepresentation::Value,
-    },
-    VariableDisplay {
-        emoji: '🏦',
-        name: "Stability",
-        representation: VariableRepresentation::Percentage,
-    },
+    }
 ];
 
 #[derive(Debug)]

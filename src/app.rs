@@ -32,8 +32,6 @@ impl App {
                     .grow_length(100),
                 Variable::new(VariableType::Crisis)
                     .grow_length(500),
-                Variable::new(VariableType::Stability)
-                    .grow_length(100),
             ],
             actions: [
                 Action::new(ActionType::Austerity),
@@ -53,7 +51,6 @@ impl App {
         self.variables[VariableType::Expenses as usize].value = 5.0;
         self.variables[VariableType::Opinion as usize].value = 100.0;
         self.variables[VariableType::Crisis as usize].value = 0.0;
-        self.variables[VariableType::Stability as usize].value = 100.0;
 
         self
     }
@@ -85,6 +82,7 @@ impl App {
                 
                 if self.hover_index > Variable::COUNT - 1 {
                     self.selected_action = ActionType::from(self.hover_index - Variable::COUNT);
+                    self.log_message(format!("Selected policy: {:?}", self.selected_action));
                 }
                 else {
                     self.selected_variable = VariableType::from(self.hover_index);
