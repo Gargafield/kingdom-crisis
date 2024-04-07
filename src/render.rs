@@ -1,6 +1,6 @@
 use ratatui::{layout::{Constraint, Layout, Rect}, style::{self, Modifier, Style, Stylize}, symbols::Marker, text::Text, widgets::{Axis, Block, BorderType, Borders, Chart, Dataset, GraphType, List, ListItem, ListState}, Frame};
 
-use crate::app::App;
+use crate::{app::App, variable::Variable};
 
 pub fn render_app(app: &App, frame: &mut Frame) {
     let [variables, actions, graph, log] = prepare_layout(frame.size());
@@ -87,13 +87,43 @@ fn render_variables(frame: &mut Frame, app: &App, area: Rect) {
     );
 }
 
-fn render_action(frame: &mut Frame, _app: &App, area: Rect) {
+fn render_action(frame: &mut Frame, app: &App, area: Rect) {
+    let mut items: Vec<ListItem> = Vec::new();
+    for (index, action) in app.actions.iter().enumerate() {
+        let text = format!(
+            "{} {}",
+            action.display.emoji,
+            action.display.name,
+        );
+        
+        let item = ListItem::new(Text::styled(
+            text,
+            style::Style::default().fg(style::Color::White)
+            ));
+
+        if app.hover_index > (Variable::COUNT - 1) && index == (app.hover_index - Variable::COUNT) {
+            items.push(item.blue().style(Style::default().add_modifier(Modifier::REVERSED))); 
+        }
+        else {
+            items.push(item);
+        }
+    }
+
     let block = Block::default()
         .title(" Actions ")
         .borders(Borders::ALL)
         .border_type(BorderType::Rounded);
 
-    frame.render_widget(block, area);
+    let list = List::new(items)
+        .highlight_symbol(">>")
+        .repeat_highlight_symbol(true)
+        .block(block);
+
+    frame.render_stateful_widget(
+        list,
+        area,
+        &mut ListState::default().with_selected(Some(app.selected_action as usize)),
+    );
 }
 
 fn render_graph(frame: &mut Frame, app: &App, area: Rect) {

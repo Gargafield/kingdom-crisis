@@ -3,6 +3,7 @@ mod render;
 mod events;
 mod variable;
 mod simulation;
+mod action;
 
 use crossterm::{
     execute, terminal::{

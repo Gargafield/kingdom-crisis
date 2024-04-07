@@ -2,29 +2,26 @@ use std::collections::VecDeque;
 
 use crossterm::event::{KeyCode, KeyEvent};
 
-use crate::variable::{Variable, VariableType};
-
-#[derive(Debug, Clone, Copy)]
-pub enum Policy {
-    Austerity,
-    Neutral,
-    Stimulus,
-}
+use crate::{action::{Action, ActionType}, variable::{Variable, VariableType}};
 
 #[derive(Debug)]
 pub struct App {
     pub selected_variable: VariableType,
+    pub selected_action: ActionType,
     pub variables: [Variable; Variable::COUNT],
+    pub actions: [Action; Action::COUNT],
     pub time: f64,
     pub log: VecDeque<String>,
-    pub policy: Policy,
     pub hover_index: usize,
 }
 
 impl App {
+    const MAX_HOVER_INDEX: usize = Variable::COUNT + Action::COUNT - 1;
+
     pub fn new() -> Self {
         Self {
             selected_variable: VariableType::GDP,
+            selected_action: ActionType::Austerity,
             variables: [
                 Variable::new(VariableType::GDP)
                     .grow_length(100),
@@ -38,9 +35,13 @@ impl App {
                 Variable::new(VariableType::Stability)
                     .grow_length(100),
             ],
+            actions: [
+                Action::new(ActionType::Austerity),
+                Action::new(ActionType::Neutral),
+                Action::new(ActionType::Stimulus),
+            ],
             time: 0.0,
             log: VecDeque::new(),
-            policy: Policy::Neutral,
             hover_index: 0,
         }
     }
@@ -78,10 +79,16 @@ impl App {
                 self.hover_index = self.hover_index.saturating_sub(1);
             }
             KeyCode::Down => {
-                self.hover_index = (self.hover_index + 1).min(Variable::COUNT - 1);
+                self.hover_index = (self.hover_index + 1).min(Self::MAX_HOVER_INDEX);
             }
             KeyCode::Enter => {
-                self.selected_variable = VariableType::from(self.hover_index);
+                
+                if self.hover_index > Variable::COUNT - 1 {
+                    self.selected_action = ActionType::from(self.hover_index - Variable::COUNT);
+                }
+                else {
+                    self.selected_variable = VariableType::from(self.hover_index);
+                }
             }
             _ => {}
         }

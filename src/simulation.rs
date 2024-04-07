@@ -1,4 +1,4 @@
-use crate::{app::{App, Policy}, variable::VariableType};
+use crate::{action::ActionType, app::App, variable::VariableType};
 
 pub fn step_simulation(app: &mut App) {
     app.time += 1.0;
@@ -9,13 +9,17 @@ pub fn step_simulation(app: &mut App) {
     step_expenses(app);
     step_tax(app);
     step_income(app);
-    step_gdp(app);
+
+    if app.time % 2.0 == 0.0 {
+        step_gdp(app);
+    }
 }
 
 fn step_gdp(app: &mut App) {
+    let opinion = app.get_variable(&VariableType::Opinion).value;
     let gdp = app.get_variable_mut(&VariableType::GDP);
-    
-    let new_gdp = gdp.value * 1.0025;
+
+    let new_gdp = gdp.value * ((opinion / 100.0 - 0.5) * 0.005 + 1.0);
     gdp.update(new_gdp);
 }
 
@@ -31,10 +35,10 @@ fn step_income(app: &mut App) {
 }
 
 fn step_tax(app: &mut App) {
-    let new_tax: f64 = match app.policy {
-        Policy::Austerity => 20.0,
-        Policy::Neutral => 15.0,
-        Policy::Stimulus => 10.0,
+    let new_tax: f64 = match app.selected_action {
+        ActionType::Austerity => 20.0,
+        ActionType::Neutral => 15.0,
+        ActionType::Stimulus => 10.0,
     };
     let tax = app.get_variable_mut(&VariableType::Tax);
 
@@ -43,10 +47,10 @@ fn step_tax(app: &mut App) {
 
 fn step_expenses(app: &mut App) {
     let gdp = app.get_variable(&VariableType::GDP).value;
-    let rate = match app.policy {
-        Policy::Austerity => 0.05,
-        Policy::Neutral => 0.1,
-        Policy::Stimulus => 0.2,
+    let rate = match app.selected_action {
+        ActionType::Austerity => 0.05,
+        ActionType::Neutral => 0.1,
+        ActionType::Stimulus => 0.2,
     };
 
     let expenses = app.get_variable_mut(&VariableType::Expenses);
@@ -56,15 +60,19 @@ fn step_expenses(app: &mut App) {
 }
 
 fn step_opinion(app: &mut App) {
-    // Higher tax, lower expenses gives a lower opinion
-    let tax = app.get_variable(&VariableType::Tax).value;
+    let rate = match app.selected_action {
+        ActionType::Austerity => 0.1,
+        ActionType::Neutral => 0.0,
+        ActionType::Stimulus => -0.1,
+    };
+
+    let crisis = app.get_variable(&VariableType::Crisis).value;
     let expenses = app.get_variable(&VariableType::Expenses).value;
     let gdp = app.get_variable(&VariableType::GDP).value;
-
     
     let opinion = app.get_variable_mut(&VariableType::Opinion);
 
-    let new_opinion = opinion.value - (tax * 0.01) + (expenses / gdp);
+    let new_opinion = opinion.value - rate + (expenses / gdp) - crisis * 0.01;
     opinion.update(new_opinion.clamp(0.0, 100.0));
 }
 
@@ -72,7 +80,7 @@ fn step_crisis(app: &mut App) {
     let time = app.time + 160.0; // Offset so crisis starts at 0.
     let crisis = app.get_variable_mut(&VariableType::Crisis);
 
-    let new_crisis = f64::sin(time / 10.0) + f64::cos(time / 100.0) * 30.0;
+    let new_crisis = f64::sin(time / 10.0) * 10.0 + f64::cos(time / 100.0) * 30.0;
     crisis.update(new_crisis.clamp(0.0, 100.0));
 }
 
@@ -85,6 +93,6 @@ fn step_stability(app: &mut App) {
     let crisis = app.get_variable(&VariableType::Crisis).value;
     let stability = app.get_variable_mut(&VariableType::Stability);
 
-    let new_stability = stability.value + (income / gdp * 0.1) - (opinion * 0.001) - (crisis * 0.001);
+    let new_stability = stability.value + (income / gdp * 0.5) + (opinion - 50.0) * 0.001 - (crisis * 0.001);
     stability.update(new_stability.clamp(0.0, 100.0));
 }
