@@ -1,6 +1,6 @@
 use ratatui::{layout::{Constraint, Layout, Rect}, style::{self, Modifier, Style, Stylize}, symbols::Marker, text::Text, widgets::{Axis, Block, BorderType, Borders, Chart, Dataset, GraphType, List, ListItem, ListState}, Frame};
 
-use crate::{app::App, variable::Variable};
+use crate::{app::App, variable::{Variable, VariableRepresentation}};
 
 pub fn render_app(app: &App, frame: &mut Frame) {
     let [variables, actions, graph, log] = prepare_layout(frame.size());
@@ -36,10 +36,12 @@ fn render_variables(frame: &mut Frame, app: &App, area: Rect) {
         let change = variable.change();
 
         let text = format!(
-            "{} {} {:.2} {}",
+            "{} {} {}{:.2}{} {}",
             variable.display.emoji,
             variable.display.name,
+            variable.display.representation.get_prefix(),
             variable.value,
+            variable.display.representation.get_suffix(),
             if change > 0.0 {
                 '↑'
             } else if change < 0.0 {
@@ -146,18 +148,27 @@ fn render_graph(frame: &mut Frame, app: &App, area: Rect) {
         .data(&binding);
 
     let x_axis = Axis::default()
-        .title("Time")
         .style(Style::default().hidden())
-        .bounds([0.0, variable.max_length as f64]);
+        .bounds([0.0, variable.last_values.len() as f64]);
+
+    let bounds = match variable.display.representation {
+        VariableRepresentation::Percentage => [0.0, 100.0],
+        VariableRepresentation::Value => [min_value, max_value],
+        VariableRepresentation::Currency => [0.0, max_value],
+    };
 
     let y_axis = Axis::default()
-        .title(variable.display.name)
-        .bounds([min_value, max_value]);
+        .bounds(bounds)
+        .style(Style::default().hidden());
     
     let chart = Chart::new(vec![dataset])
         .block(block)
         .x_axis(x_axis)
-        .y_axis(y_axis);
+        .y_axis(y_axis)
+        .style(Style::default().hidden());
+
+    // How would i hide the y axis?
+    // let chart = chart.style(Style::default().hidden());
 
     frame.render_widget(chart, area);
 }

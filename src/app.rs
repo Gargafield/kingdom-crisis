@@ -24,14 +24,14 @@ impl App {
             selected_action: ActionType::Austerity,
             variables: [
                 Variable::new(VariableType::GDP)
-                    .grow_length(100),
+                    .grow_length(500),
                 Variable::new(VariableType::Income),
                 Variable::new(VariableType::Tax),
                 Variable::new(VariableType::Expenses),
                 Variable::new(VariableType::Opinion)
                     .grow_length(100),
                 Variable::new(VariableType::Crisis)
-                    .grow_length(250),
+                    .grow_length(500),
                 Variable::new(VariableType::Stability)
                     .grow_length(100),
             ],

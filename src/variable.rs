@@ -1,6 +1,32 @@
 use std::collections::vec_deque;
 
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub enum VariableRepresentation {
+    #[default]
+    Value,
+    Currency,
+    Percentage,
+}
+
+impl VariableRepresentation {
+    pub fn get_suffix(&self) -> &'static str {
+        match self {
+            VariableRepresentation::Value => "",
+            VariableRepresentation::Currency => "",
+            VariableRepresentation::Percentage => "%",
+        }
+    }
+
+    pub fn get_prefix(&self) -> &'static str {
+        match self {
+            VariableRepresentation::Value => "",
+            VariableRepresentation::Currency => "$",
+            VariableRepresentation::Percentage => "",
+        }
+    }
+}
+
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 pub enum VariableType {
     #[default]
     GDP,
@@ -31,6 +57,7 @@ impl From<usize> for VariableType {
 pub struct VariableDisplay {
     pub emoji: char,
     pub name: &'static str,
+    pub representation: VariableRepresentation,
 }
 
 const VARIABLE_COUNT: usize = 7;
@@ -38,30 +65,37 @@ const VARIABLE_DISPLAY: [VariableDisplay; VARIABLE_COUNT] = [
     VariableDisplay {
         emoji: '💲',
         name: "GDP",
+        representation: VariableRepresentation::Currency,
     },
     VariableDisplay {
         emoji: '💰',
         name: "Income",
+        representation: VariableRepresentation::Currency,
     },
     VariableDisplay {
         emoji: '🏧',
         name: "Tax",
+        representation: VariableRepresentation::Percentage,
     },
     VariableDisplay {
         emoji: '💸',
         name: "Expenses",
+        representation: VariableRepresentation::Currency,
     },
     VariableDisplay {
         emoji: '😁',
         name: "Opinion",
+        representation: VariableRepresentation::Percentage,
     },
     VariableDisplay {
         emoji: '🔥',
         name: "Crisis",
+        representation: VariableRepresentation::Value,
     },
     VariableDisplay {
         emoji: '🏦',
         name: "Stability",
+        representation: VariableRepresentation::Percentage,
     },
 ];
 
@@ -81,9 +115,9 @@ impl Variable {
         Self {
             type_,
             display: &VARIABLE_DISPLAY[type_ as usize],
-            last_values: vec_deque::VecDeque::with_capacity(10),
+            last_values: vec_deque::VecDeque::with_capacity(50),
             value: 0.0,
-            max_length: 10,
+            max_length: 50,
         }
     }
 
