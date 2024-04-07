@@ -18,6 +18,8 @@ Kingdom Crisis is a terminal-based financial toy-simulation made with [Rust](htt
 
 The game is using arrow keys to navigate and enter to select. You can navigate through the menus and select the policies you want to apply, and the variables you want to see in the graph view.
 
+![Image](media/image.png)
+
 ## Contributing
 
 This project is a school project and is not open for contributions.
